@@ -180,3 +180,28 @@ CMake是一种跨平台的构建工具，用于管理和构建C，C++和其他�
 
 ### 目前小结
 目前为止，看到ply文档基本上先看他的头文件信息，告诉了你这里面的相关参数以及接下来的内容，推测斯坦福兔子的每个名字都应该是方位加上角度，然后里面的头文件是为了方便你可视化进行操作的。
+
+## 交流过后
+上午和老师交流了下，说是让咱在github上面找一找相关的项目，有一说一，之前还真的没有想到从github上面找相关的内容，下意识的还是去搜索中文互联网或者是求助谷歌，看来这样的坏习惯还是需要改得啊。
+
+然后被推荐了几个网课和一本书，下载了还没看，任务喜加一。
+
+说说收获，现在突然想到了这个`model`和`data`是什么了，`model`就是记录空间座标的`x,y,z`，而`data`应该就是`r,g,b`，可以说是之前没有想到了
+
+## pointcloudToTXT
+在github上面找的[项目](https://github.com/danielTobon43/pointcloudToTXT)发现缺少头文件，下的libpcl-dev居然有1.3g，不知道后续如何但是目前为止感觉不是很靠谱。
+
+东西现在是下完了，但是跑不起来，cmake可以，但是make的时候就有了两个报错，不知道是什么问题，显示的是/usr/include/pcl-1.12/pcl/polygonsh.h这里面的文件，但是这文件是pcl的文件啊，莫名其妙。
+
+### 解决问题
+在[评论](https://github.com/danielTobon43/pointcloudToTXT/pull/2)里面看到了有人说如何解决这样的问题的方法：
+在`CMakeLists.txt`文件里面的`project(pointcloudToTXT VERSION 1.0.0)`后面添加如下语句：
+
+```cmake
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+```
+
+不能说非常厉害，只能说是非常牛逼了。这两句话是更改cmake的C++版本的，把版本设置为C++14，就可以使用缺少的lambda函数，但是这个东西是C++11引入的，所以说理论上更改为C++11也可以？
+
+结果出来了，并不是我们预想中的那样，这里输出的结果是xyz以及rgb，这是这里面的rgb都是0 0 0，并不是我们需要的data和model。
