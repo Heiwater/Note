@@ -71,6 +71,118 @@
 
 # chapt 6
 
+## if else
+这个结构相对来说比较的简单，硬要说的话就只有一些新鲜的写法
+
+```c++
+if(xxxx)
+
+else
+    if(xxx)
+
+else
+```
+
+这样的书写格式也是正确的
+
+## 逻辑表达式
+经典的与或非，没什么新奇的
+
+## 字符函数库 cctype
+这个之前没有见到过，简言之就是一个函数库，里面提供了现成的用来判断字符的函数
+
+使用前需要添加头文件`#include <cctyoe>`
+
+具有如下功能：
+|   名称   |  返回值  |
+|:-:|:-:|
+|   isalnum()   |   参数是字母或数字，返回true|
+|   isalpha()   |   参数是字母，返回true|
+|   iscntrl()   |   参数是控制字符，返回true|
+|   isdigit()   |   参数是数字，返回true|
+|   isgraph()   |   参数是除空格外的打印字符，返回true|
+|   islower()   |   参数是小写字符，返回true|
+|   isprint()   |   参数是打印字符（包括空格），返回true|
+|   issapce()   |   参数是标准空白字符（包括空格、进纸、换行符、回车、水平制表符或者垂直制表符），返回true|
+|   isupper()   |   参数是大写字符，返回true|
+|   isxdigit()  |   参数是十六进制数字，返回true|
+|   tolower()   |   如果参数是大写字符，返回其小写，否则返回该参数  |
+|   toupper()   |   如果参数是小写字符，返回其大写，否则返回该参数  |
+
+## 双目运算符
+没啥聊得，`experssion1 : expression2 ? expression3`
+
+如果表达式1正确，则执行2，否则执行3。
+
+## switch语句
+记住这玩意每个判断必须要写`break;`否则会继续执行就可以了。
+
+> C++中的case标签只是行标签，而不是选项之间的界限，程序不会执行到下一个case前停止，要让程序执行完特定的一组语句后停止，必须使用break
+
+## break&continue
+break直接跳出循环，continue则是跳过当前循环的后半段，继续下一次的循环，这里有个书上很精妙的例子，可以参考下。
+
+```C++
+for(int i = 0; line[i] != '\0'; i++)
+{
+    //逐字输出用户输入的字符，遇到.停止，并且统计用户所输入的空格个数
+    cout << line[i];
+    if(line[i] == '.')
+        break;
+    if(line[i] != ' ')
+        continue;
+    spacesnum ++;
+}
+```
+
+## 读取数字的循环
+这里比较有趣的是假设用户会输入错误的指令，那么就需要重新给予用户指令提示，这里还是照例给出书上的代码进行参考。
+
+```C++
+for(int i = 0; i < Max;I++)
+{
+    //循环读入各个高尔夫击球数据，遇到非数字的情况，进行报错
+    cout << "round #" << i+1 << ":";
+    while(!(cin >> golf[i])){
+        cin.clear();
+        while(cin.get() != '\n')
+            continue;
+        cout << "please enter a number:";
+    }
+}
+```
+
+## 简易I/O
+输入输出流需要包含头文件`# include <fstream>`
+
+### 输入
+```C++
+ifstream inFile;
+ifstream fin;
+//打开特定的文件
+inFile.open("input.txt");
+//打开指定的的文件
+char filename[50];
+cin >> filename;
+fin.open(filename);
+//记得关闭
+inFile.close();
+```
+
+### 输出
+```C++
+ofstream outFile;
+ofstream fout;
+//打开特定的文件
+outFile.open("input.txt");
+//打开指定的的文件
+char filename[50];
+cin >> filename;
+fout.open(filename);
+//记得关闭
+outFile.close();
+```
+
 # chapt 7
 
 
