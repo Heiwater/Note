@@ -99,3 +99,77 @@ OMNet 是一个端到端的迭代网络，通过由粗到细的方法实现3D刚
 # 总结
 
 # 项目部署
+喜闻乐见的，最后还是用了colab进行项目的部署，这就引出了另一件事情，想要整一张能用的信用卡来购买个colab会员，不过那都是后话了，现在在折腾环境的部署
+
+## 所需环境
+这里还是插一句嘴，colab可以直接当成linux虚拟机用，但是还是逃不过喜闻乐见的配置环境的问题，OMNet提供了所必须要的系统环境，这里还是按照惯例列举下：
+
+|名称|版本|
+|:-:|:-:|
+|Pytorch|>=1.5.0|
+|coloredlogs|==15.0.1|
+|h5py|==3.1.0|
+|numpy|==1.19.5|
+|pytorch3d|==0.3.0|
+|scipy|==1.5.3|
+|termcolor|==1.1.0|
+|torch|==1.9.1|
+|torchvision|==0.10.1|
+|tqdm|==4.62.3|
+|transforms3d|==0.3.1|
+
+## 出现的问题
+
+### numpy无法安装
+
+好像colab自带numpy，网上看的都是直接`imprott numpy as np`
+
+---
+不清楚是不是colab的问题numpy现在是没有办法直接pip install的，下面还是贴上是什么原因：
+```
+Building wheels for collected packages: numpy
+  error: subprocess-exited-with-error
+  
+  × Building wheel for numpy (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> See above for output.
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  Building wheel for numpy (pyproject.toml) ... error
+  ERROR: Failed building wheel for numpy
+Failed to build numpy
+ERROR: Could not build wheels for numpy, which is required to install pyproject.toml-based projects
+Looking in indexes: https://pypi.org/simple, https://us-python.pkg.dev/colab-wheels/public/simple/
+```
+
+### scipy 无法安装
+
+这个好像也有
+
+---
+
+```
+Collecting scipy==1.5.3
+  Downloading scipy-1.5.3.tar.gz (25.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 25.2/25.2 MB 64.2 MB/s eta 0:00:00
+  error: subprocess-exited-with-error
+  
+  × pip subprocess to install build dependencies did not run successfully.
+  │ exit code: 1
+  ╰─> See above for output.
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  Installing build dependencies ... error
+error: subprocess-exited-with-error
+
+× pip subprocess to install build dependencies did not run successfully.
+│ exit code: 1
+╰─> See above for output.
+
+note: This error originates from a subprocess, and is likely not a problem with pip.
+Looking in indexes: https://pypi.org/simple, https://us-python.pkg.dev/colab-wheels/public/simple/
+```
+
+
+### data目录下缺少 shape_names.txt
+看了下人家项目里面的issue，然后就解决了QAQ
