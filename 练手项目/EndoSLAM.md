@@ -78,6 +78,8 @@ f_x&s&c_x\\
 
 很幸运的，c3vd数据集给出了相应的初始化信息，在`intrinsics.txt`文件内，并且是以矩阵形式给出来的。现在需要处理得就是将原有的矩阵改成EndoSLAM所要求的`cam.txt`文件了
 
+> 其实不用，用人家数据集自带的`intrinsics.txt`改个名就对了，就只要输入个33矩阵，问题不大
+
 cam.txt给出的文件内容如下：
 ```
     fx: 156.0418
@@ -95,6 +97,8 @@ cam.txt给出的文件内容如下：
 
 ## 畸变系数k1&k2
 看人家的介绍，两个畸变系数就可以表示出来，但是不清楚是不是可以直接标记成0，这里又一个[参考](https://blog.csdn.net/Jeff_zjf/article/details/118579649)，人家好像只是给了一个相机内参矩阵，别的都填的0，不知道填0有没有影响，明天试试。
+
+> 后来发现完全没有必要用这个东西，就只要了个初始化参数
 
 # day2
 说实话在开始跑之前还没有搞明白C3VD的数据集组成是什么，所以想着在搞之前先了解下这个数据集的组成，至少知道这些sigmod之类的对应的什么先
@@ -165,6 +169,8 @@ fx，fy这样的格式不管用
 至少现在不是很需要用
 ~~上面的问题依旧没有解决，聊了下可以考虑写一个loader，来吧数据读进去~~
 
+> 现在的情况是，整个改一改代码qwq，问题不大，都是好事儿
+
 ## ValueError: cannot reshape array of size 3 into shape (3,3)
 这玩意应该说的是我那个`cam.txt`里面的格式不是很对，我试着改改先，改之前先贴上最开始的格式
 
@@ -212,4 +218,102 @@ Traceback (most recent call last):
 
 现在先老老实实改改代码吧，人家师兄专门跑过来给你瞅的东西，不能白瞎人家的好意不是
 
-## 
+## 代码结构
+
+### 梳理之前
+其实很好奇，现在在试着复现的东西什么个原理，也是计算机视觉，根据视觉训练出来的东西来确定现在的内窥镜在什么位置是么？没有看论文，不清楚是什么个原理，看着样子是根据内窥镜的图片输入，输出一个运动轨迹，和以前的识别不是很一样就是了
+
+## 初始化修改
+这里就是想要修改相应的初始化内容，以求能够用于c3vd数据集
+
+```python
+    def __init__(self, root, seed=None, train=True, sequence_length=3, transform=None, skip_frames=1, dataset='kitti'):
+        np.random.seed(seed)
+        random.seed(seed)
+        self.root = Path(root)
+        # [TODO] remove
+        scene_list_path = self.root/'train.txt' if train else self.root/'val.txt'
+        # [TODO] modify this to listdir
+        self.scenes = [self.root/folder[:-1] for folder in open(scene_list_path)]
+        # [TODO] modify the sequence_length to the length of self.scenes
+        self.transform = transform
+        self.dataset = dataset
+        self.k = skip_frames
+        self.crawl_folders(sequence_length)
+
+```
+
+### scene_list_path
+这里就是确定你训练集或者是测试集地方的，原本是根据你的`train.txt`文件内的内容来确定每一个训练的内容，现在想改成直接读取当前目录下的所有文件
+
+这一段看上去应该是确定了你的训练的子集的列表位置，让后开始读？
+
+#### [:-1]是啥
+菜鸟教程给了个例子：
+```python
+    d=a[:-1]  #从位置0到位置-1之前的数
+    print(d)  #pytho
+```
+
+结合自己之前看到的来说，这个可能就是为什么要加回车的原因了，相当于你的文件位置是`/dataset/DIR`，但是由于你用的是`txt`格式的文件存储的，所以说你需要在文件结束后敲上一个回车，这样你`self.root/folder[:-1]`输出的就是正常的不带回车的。
+
+或者是删除`\0`之类的？大概是这个意思
+
+#### transform
+transform改不改还另说
+
+#### 要干啥
+现在想的是用python实现： 读取当前文件下的文件列表以及`intrinsic.txt`
+
+现在这一段的内容就是实现咱说的事情的，但是相较之下还有些事情没有做:
+```python
+    self.transform = transform
+    self.dataset = dataset
+    self.k = skip_frames
+    self.crawl_folders(sequence_length)
+```
+
+这些都是**超参数？**还是什么东西，看着这些都在开头的定义里面有给出：
+```python
+def __init__(self, root, seed=None, train=True, sequence_length=3, transform=None, skip_frames=1,dataset='kitti'):
+```
+
+所以推测默认的是给`kitti`数据集使用的，所以需要改改么？
+
+~~transform，这些里面感觉就只有最后一个是要看看得，所以现在先考虑下如何用python实现文件列表的读取吧~~
+> 其实最后一个是调用的下面的函数，所以鼠标以后可以没事儿多点点，能弹出来高亮的 = =
+
+#### 文件列表读取
+靠chatgpt写了个读取当前目录下的文件的程序，还不错
+
+```python
+import os
+
+def get_subdirectories(folder_path):
+    subdirectories = []
+    for dirpath, dirnames, filenames in os.walk(folder_path):
+        for dirname in dirnames:
+            subdirectories.append(dirname)
+    return subdirectories
+
+folder_path = '/path/to/your/folder'  # 替换为你想要读取的文件夹路径
+output_file = 'output.txt'  # 输出文件名
+
+subdirectories = get_subdirectories(folder_path)
+
+with open(output_file, 'w') as file:
+    for subdir in subdirectories:
+        file.write(subdir + '\n')
+```
+
+其中主要的是这个`os.walk`，里面包含了三个`list`分别是:`dirpath`、`dirnames`、`filenames`，稍微改了下，放到了`/home/zsy/EndoSLAM/EndoSLAM-master/EndoSfMLearner/datasets/C3VD`下面的`test.py`里面了
+
+小编也是第一次知道捏，那么剩下的就是添加一个小功能，统计下当前文件夹下面的子文件的个数就可以了
+
+## 感觉能整了
+EndoSLAM！启动！
+
+### 寄
+现在能读进去图片了，但是又有新的问题出现了`AttributeError: module 'torchvision.models.resnet' has no attribute 'model_urls'`
+
+说是应该是版本不对，或者是因为更新到了新的版本没有相应的东西了，所以说该找找**相应的版本了**，所以说现在的问题是用了错误了`torchvision`版本
