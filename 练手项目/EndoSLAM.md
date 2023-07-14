@@ -317,3 +317,36 @@ EndoSLAM！启动！
 现在能读进去图片了，但是又有新的问题出现了`AttributeError: module 'torchvision.models.resnet' has no attribute 'model_urls'`
 
 说是应该是版本不对，或者是因为更新到了新的版本没有相应的东西了，所以说该找找**相应的版本了**，所以说现在的问题是用了错误了`torchvision`版本
+
+# day4
+天道好轮回，环境饶过谁。
+
+## 试试版本
+昨天基本上已经锁定了问题是因为版本不对，新版的`torchvision`删掉了一些api，然后人家项目给的是`pytorch>=1.5.1`，找了个[教程](https://blog.csdn.net/jorg_zhao/article/details/106883420)，当然不是广义上的教程，只是单纯的告诉你对应的版本，还挺不错的。
+
+试了试`conda install pytorch==1.5.1 torchvision==0.6.1 cudatoolkit=10.2 -c pytorch`，然而不是很管用的样子。
+
+搜了下另一个[教程](https://ptorch.com/news/198.html)，好像有新的说法
+
+`conda install pytorch=1.5.1 -c soumith`
+
+但是后面的`-c soumith`不清楚是什么情况，`-c`是指的channal，所以说后面的soumith就是相应的通道的名字了，那么我需要执行以下的指令：
+ 1. `conda install pytorch=1.5.1 -c soumith`
+ 2. `conda install torchvision=0.6.1 -c soumith`
+ 3. `conda install cudatoolkit=10.2 -c soumith`
+
+还是不行，所以说是不是可能是因为python版本过高的缘故？现在的python版本是`3.10`，人家推荐的是`>=3.6`，所以说有没有说法自己新建一个conda环境？
+
+但是转念一想模板库好像不是那么容易更新的吧？所以说是不是可能是代码在调用木板地时候出了问题？
+
+看得人家的代码里面用的好像就是18层的resnet，在`train.py line157`说了是`pose_net = models.PoseResNet(18, args.with_pretrain).to(device)`
+
+感觉不像，可能就是环境的问题，下面试着折腾下conda
+
+## 试试[conda](https://blog.csdn.net/SARACH_WONG/article/details/89328307)
+
+### 查看conda现存版本
+`conda info --envs`
+
+### 好像有[bug](https://github.com/conda/conda/issues/10969)
+说是好像两位是版本的python在conda上的支持不是很好，现在每一次试着创建低版本的环境竟会报错
