@@ -490,5 +490,7 @@ def __getitem__(self, index):
 }
 ```
 
+这里贴上一个vscode[教程](https://geek-docs.com/vscode/vscode-tutorials/vscode-code-debugger.html)，没别的，就是单纯的看人家字数多，就是专业
+
 ## 跑起来力！盖瑞！
 喜闻乐见的，跑起来了，然后就是慢慢的等着呗。
