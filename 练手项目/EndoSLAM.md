@@ -349,4 +349,146 @@ EndoSLAM！启动！
 `conda info --envs`
 
 ### 好像有[bug](https://github.com/conda/conda/issues/10969)
-说是好像两位是版本的python在conda上的支持不是很好，现在每一次试着创建低版本的环境竟会报错
+说是好像两位是版本的python在conda上的支持不是很好，现在每一次试着创建低版本的环境竟会报错Translate
+
+# Day5
+有个靠谱的学长真不错
+
+## 解决
+之前困扰的问题，只需要稍微改一下就可以：
+```python
+    if pretrained:
+        # new
+        if num_layers == 18:
+            from torchvision.models import ResNet18_Weights
+            pretraine_weights = ResNet18_Weights.IMAGENET1K_V1
+        if num_layers == 50:
+            from torchvision.models import ResNet50_Weights
+            pretraine_weights = ResNet50_Weights.IMAGENET1K_V1
+        # the old version:
+        # loaded = model_zoo.load_url(models.resnet.model_urls['resnet{}'.format(num_layers)])
+        loaded = model_zoo.load_url(pretraine_weights.url)
+        loaded['conv1.weight'] = torch.cat(
+            [loaded['conv1.weight']] * num_input_images, 1) / num_input_images
+        model.load_state_dict(loaded)
+    return model
+```
+### 为啥
+版本更新了，不能用旧的`model_urls`这个功能了，所以改成了根据不同的情况引用不同的预训练权重。
+
+所以有的时候没有必要完完全全的复现原作者当时所使用的环境，根据现在的更新的开发者文档来有针对性的更新程序本身可能不失为一件更有意义的事情
+
+## RuntimeError: Given groups=1, weight of size [64, 3, 7, 7], expected input[4, 1080, 1350, 3] to have 3 channels, but got 1080 channels instead got 1080 channels instead
+
+现在的问题大概率是输入的有问题，所以要修改的也是在`train`文件内，但是看不懂这件事情就比较的尴尬
+
+> 最后在学长精湛的操作和咱一旁吃瓜注视下基本完美的解决了，顺带发现自己还有好多东西基本上根本没有接触过，不过都是好事儿，至少自己有一段时间有很多东西可以折腾了
+
+这个是因为自己没有整理好输入的图片内容，以及相应的输入的格式，EndoSLAM所有的输入基本上都在`sequence_floder.py`，添加了`center_crop`这个类来实现中心剪裁以及深度值重新缩放。
+
+添加的内容如下：
+
+### center_crop
+这里主要是实现中心剪裁以及深度值的重新缩放
+
+```python
+def img_center_crop(img, size):
+    """
+    Center crop a PIL image
+    Args:
+        img: a PIL image
+        size: a list contain the width and height , eg. [1024, 2048]
+    Return:
+        Center croped PIL image
+    """
+    width, height = img.size
+    new_height, new_width = size
+    left = (width - new_width)/2
+    top = (height - new_height)/2
+    right = (width + new_width)/2
+    bottom = (height + new_height)/2
+    return img.crop((left, top, right, bottom))
+
+def c3vd_depth_rescale(depth):
+    """
+    Linearly rescale the depthmap of c3vd dataset
+    Args:
+        depth:  a NUMPY ARRAY, PIL image MUST be converted to numpy array before processing
+                use np.array(img) to convert a PIL image to numpy array
+                where img is a PIL object.
+    Return:
+        depth:  a depth map in which depth ranged from 0 to 100
+    """
+    scale_factor = scale_factor = 100 / 65535
+    depth = depth * scale_factor
+    # [H, W] to [B, H, W]
+    depth = depth.np.expand_dims(depth, axis=-1)
+    return depth
+```
+
+### getitem
+这里是读进来数据的部分，然后顺理成章的就在这里讲读入的数据剪裁成合适的大小，并且修改读入的数据以求符合模型
+
+```python
+def __getitem__(self, index):
+        sample = self.samples[index]
+        tgt_img = load_as_float(sample['tgt'])
+        ref_imgs = [load_as_float(ref_img) for ref_img in sample['ref_imgs']]
+
+        # preprocess for c3vd
+        img_size = [1056, 1344]
+        tgt_img = img_center_crop(tgt_img, img_size)
+        ref_imgs = [img_center_crop(ref_img, img_size) for ref_img in ref_imgs]
+
+        # convert to numpy array
+        # [H, W, C] to [B, C, H, W]
+        tgt_img = np.array(tgt_img, dtype=np.float32).transpose(2, 1, 0)
+        ref_imgs = [np.array(ref_img, dtype=np.float32).transpose(2, 1, 0) for ref_img in ref_imgs]
+
+        if self.transform is not None:
+            imgs, intrinsics = self.transform([tgt_img] + ref_imgs, np.copy(sample['intrinsics']))
+            tgt_img = imgs[0]
+            ref_imgs = imgs[1:]
+        else:
+            intrinsics = np.copy(sample['intrinsics'])
+        return tgt_img, ref_imgs, intrinsics, np.linalg.inv(intrinsics)
+```
+
+## 炫酷操作
+这里是炫酷的debug环节，只能说十分地好用，可以在debug console里面查看相应的参数，说实话自己以前的debug用过，但是用的不多，这次人家的操作属实是小刀剌屁股，开了眼了。
+
+里面的args，就是代替原本输入的参数，即文件所在的位置，输出的地方，这个-b是batchsize大小，因为文件太大了，现存不是很够，所以只能调小一次性扔进去的数据大小。
+
+env这里是修改运行的显卡，0号卡学长在用，所以只能修改到1号卡上面来试着跑一下。
+
+program这里是这个EndoSLAM的训练的主程序，这样子写相当于只调试这一个程序的内容，但是由于会调用其他程序所以说问题不大，至少这样子不用像常见的通用的调试那样调到相应的程序在点击调试运行就是了。
+
+```json
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "train",
+            "type": "python",
+            "request": "launch",
+            "program": "EndoSfMLearner/train.py",
+            "args": [
+                "/home/zsy/EndoSLAM/EndoSLAM-master/EndoSfMLearner/data",
+                "--name", "cecum_t1_a_under_review",
+                "-b", "1"
+            ],
+            "console": "integratedTerminal",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "1"
+            },
+            "justMyCode": true
+        }
+    ]
+}
+```
+
+## 跑起来力！盖瑞！
+喜闻乐见的，跑起来了，然后就是慢慢的等着呗。
