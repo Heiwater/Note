@@ -494,3 +494,47 @@ def __getitem__(self, index):
 
 ## 跑起来力！盖瑞！
 喜闻乐见的，跑起来了，然后就是慢慢的等着呗。
+
+---
+
+# 悄悄滴进村，打枪滴不要！（后台运行）
+后台运行是个好东西，但是可惜之前不会，不过问题不大，现在会了
+
+## 系统自带的
+
+### &
+最常见的就是`&`，在指令的后面写上`&`就可以后台运行了，但是很可惜还是不能关闭终端，一旦关闭，后台的任务就没有了。
+
+### jobs
+在你使用`&`把程序挂载在后台的时候可以以使用`jobs`指令来查看后台运行的程序，使用`jobs -l`可以顺带查看指令的`uid`
+
+### fg & bg
+在使用jobs列出后台的任务后，使用`fg %NUM`来使的编号为NUM的程序在前台运行，或者是使用`bg %NUM`使得编号为NUM的在后台运行
+
+### Ctrl+z & Ctrl+c
+`Ctrl+z`是暂停，`Ctrl+c`是结束。
+
+### ps -ef|grep XXXXX
+这个相当于是一个搜索指令，XXXX是搜索的关键词，你可以直接搜索出来你想要的相关指令。
+
+### kill
+在`Ctrl+z`后可以使用`Kill`指令来关闭暂停的任务
+
+`kill %NUM`，使用在`jobs`之后，可以关闭第NUM个任务
+
+`kill PID`，使用在`ps -ef|grep XXXXX`之后，关闭指定PID的任务
+
+## [screen](https://developer.aliyun.com/article/311702)
+这个是得下载的，直接`sudo apt install screen`，不得不说这个是真的好用
+
+### 创建
+`screen -S NAME`，创建一个名为NAME的窗口
+
+### 显示
+`screen -list`，显示已经创建了的窗口
+
+### 恢复
+`screen -r`/`screen -r NUM`，恢复窗口
+
+### 退出
+`Ctrl + a + d`
