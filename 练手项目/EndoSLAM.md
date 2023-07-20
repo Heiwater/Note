@@ -538,3 +538,8 @@ def __getitem__(self, index):
 
 ### 退出
 `Ctrl + a + d`
+
+# tensorboard
+很人性化的，一行指令`tensorboard --logdir=.`
+
+我觉得难点可能是环境的配置，但是有万能的学长搞定了，真不错诶
