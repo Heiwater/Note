@@ -543,3 +543,27 @@ def __getitem__(self, index):
 很人性化的，一行指令`tensorboard --logdir=.`
 
 我觉得难点可能是环境的配置，但是有万能的学长搞定了，真不错诶
+
+# 总结
+最后整完了，一开始只跑了数据集的一小部分，后来还是给跑完了全程，可能是优化的不是很好，24G的显卡只用了14G，所以跑完全部跑了快两天48小时，只能说还是菜的厉害
+
+训练完之后，跑了测试，就是`train`，这里留一下`json`
+```json
+    {
+    "name": "test_disp",
+    "type": "python",
+    "request": "launch",
+    "program": "EndoSfMLearner/test_disp.py",
+    "args": [
+        "--pretrained-dispnet", "/home/zsy/EndoSLAM/EndoSLAM-master/EndoSfMLearner/checkpoints/C3VD/07-21-11:23/dispnet_model_best.pth.tar",
+        "--dataset-dir", "/data/2080ti/Datasets/ColonoscopyDepthData/T3/C_T3_L3_3_resized",
+        "--output-dir", "eval/T3",
+        "--img-height", "320",
+        "--img-width", "320"
+    ],
+    "console": "integratedTerminal",
+    "justMyCode": true
+    }
+```
+
+跑出来的结果在扔到测试程序里面出个结果就完了QAQ
